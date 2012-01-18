@@ -1,0 +1,156 @@
+<div id="container">
+	<div id="header" class="wide">
+		<div id="return">
+			<a href="/w320/"><span>wróć</span></a>
+		</div>
+		<div id="search">
+			Wybierz miasto
+		</div>
+	</div>
+	<ul class="forecast links">
+		<li class="query">
+			<ul>
+				<li id="jCities" class="lead">
+					<div>
+						<form id="jSearchForm" method="post" action="<?php echo $this->href(array('controller' => 'city', 'action' => 'search')); ?>">
+							<fieldset>
+								<input type="text" autocomplete="off" name="query" id="query" value="wyszukaj miasta lub region" maxlength="255" />
+							</fieldset>
+						</form>
+					</div>
+				</li>
+				<?php $i = 0; ?>
+				<?php foreach ($this->cities as $city) : ?>
+				<li class="jItem<?php if ($i + 1 == sizeof($this->cities)) echo ' last'; ?>"><div><span class="icon<?php if ($city->city_id == $this->cityId) echo ' selected'; ?>"></span><a tabindex="<?php echo $i+1; ?>" href="<?php echo $this->href(array('controller' => 'city', 'action' => 'details', 'params' => array('id' => $city->getCityId()))); ?>"><?php echo $city->getName(); ?></a></div></li>
+				<?php $i++; ?>
+				<?php endforeach; ?>
+			</ul>
+		</li>
+		<li>
+			<ul>
+				<li class="lead">
+					<div>
+						<strong>Wybrane regiony</strong>
+					</div>					
+				</li>
+				<?php $i = 0; ?>
+				<?php foreach ($this->categories as $category) : ?>
+				<li<?php if ($i + 1 == sizeof($this->categories)) echo ' class="last"'; ?>><div><span class="icon category_<?php echo $category->id; ?>"></span><a href="#"><?php echo $category->name; ?></a>
+					<?php if (sizeof($category->cities) > 0) : ?>
+					<a href="#" class="expander"><span>pokaż</span></a>
+					<?php endif; ?>
+					</div></li>
+					<?php foreach ($category->cities as $city) : ?>
+						<li class="jCity"><div><span class="icon <?php if ($city->city_id == $this->cityId) echo ' selected'; ?>"></span><a href="<?php echo $this->href(array('controller' => 'city', 'action' => 'details', 'params' => array('id' => $city->city_id))); ?>"><?php echo $city->name; ?></a></div></li>						
+					<?php endforeach; ?>
+				<?php $i++; ?>
+				<?php endforeach; ?>
+			</ul>
+		</li>
+	</ul>
+</div>
+<?php if (empty($this->searchQuery)) : ?>
+<script type="text/javascript">
+//<![CDATA[
+
+var currentTabIndex = 0;
+
+var const_LABEL = 'wyszukaj miasta lub region';
+
+var const_CITYID = <?php echo $this->cityId; ?>;
+
+$(document).ready(function(){
+	$(document).keydown(function(event){
+		var interaction = false;
+		if (event.which == 40) {
+			currentTabIndex++;
+			interaction = true;
+		} else if (event.which == 38) {
+			currentTabIndex = currentTabIndex > 0 ? currentTabIndex - 1 : 0;
+			interaction = true;
+		}
+		
+		if (interaction) {
+			event.preventDefault();
+			$('.jItem').each(function(index) {
+				if (index + 1 == currentTabIndex) {
+					$(this).find('a').focus();
+					$('.query').find('a').removeClass('focused');
+					$(this).find('a').addClass('focused');
+				}
+			});
+			return false;
+		}
+	});
+});
+
+$(document).ready(function(){
+
+	$('.expander').each(function(index) {
+		$(this).click(function() {
+			if ($(this).is('.expanded')) {
+				$(this).parent().parent().next().hide();
+				$(this).removeClass('expanded');				
+			} else {
+				$(this).parent().parent().next().show();
+				$(this).addClass('expanded');
+			}
+		});
+	});
+	
+	$('#jSearchForm').submit(function() {
+		return false;
+	});
+	
+	$('#query').focus(function(){
+		if ($(this).val() == const_LABEL) {
+			$(this).val('');
+		}
+	}).blur(function(){
+		if ($(this).val() == '') {
+			$(this).val(const_LABEL);
+		}
+	}).keyup(function(event){
+		
+		var query = $('#query').val();
+		if (query.length > 0) {
+			
+			var uri = "<?php echo $this->href(array('controller' => 'city', 'action' => 'ajax')); ?>";
+			
+			$.ajax({
+			  url: uri + '/query/' + query,
+			  dataType: 'json',
+			  type: 'GET',
+			  success: function(data){
+			  	
+			  	currentTabIndex = 0;
+			  	
+			  	$('.jItem').remove();
+			  	
+				var html = '';
+			    if (data) {			    	
+			    	for (var i = 0; i < data.length; i++) {
+			    		
+			    		data[i].name = data[i].name.replace(query, '<em>' + query + '</em>');
+			    		html += '<li class="jItem';
+			    		if (i == data.length - 1) {
+			    			html += ' last';
+			    		}
+			    		html += '"><div><span class="icon';
+			    		if (data[i].city_id == const_CITYID) {
+			    			html += ' selected';
+			    		}
+			    		html += '"></span><a tabindex="' + (i + 1) + '" href="<?php echo $this->href(array('controller' => 'city', 'action' => 'details')); ?>/id/' + data[i].city_id + '">' + data[i].name + '</a></div></li>';
+			    	}
+			    } else {
+			    	html += '<li class="jItem last"><div>Brak rezultatów</div></li>';
+			    }
+			    $('#jCities').after(html);
+			  }
+			});
+		}
+	});
+});
+//]]>
+</script>
+<?php endif; ?>

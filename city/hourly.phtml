@@ -1,0 +1,64 @@
+<div id="container">
+	<div id="header">
+		<div id="meta">
+			<strong><?php echo $this->city->name; ?></strong><br />
+		</div>
+		<div id="tools">
+			<ul>
+				<li class="daily"><a href="<?php echo $this->href(array('controller' => 'city', 'action' => 'details', 'params' => array('id' => $this->city->city_id))); ?>"><span>wg godzin</span></a></li>
+				<li class="cities"><a href="/w320/city/index"><span>miasta</span></a></li>
+			</ul>
+		</div>
+	</div>
+	<ul class="forecast">
+	<?php $i = 0; ?>
+	<?php foreach ($this->days as $day) : ?>
+		<li<?php if ($i == 0) echo ' class="first"'; ?>>
+			<ul>
+				<li class="lead">
+					<div>
+						<strong>
+							<?php if (date('d', strtotime('+1 day')) == substr($day['date'], 8, 2)) : ?>
+								Jutro (<?php echo $this->DayFromDate(substr($day['date'], 5, 2), substr($day['date'], 8, 2)) . ', ' . substr($day['date'], 8, 2) . ' ' . $this->MonthAsString(substr($day['date'], 5, 2)); ?>)	
+							<?php else : ?>
+								Dzisiaj, <?php echo substr($day['date'], 8, 2) . ' ' . $this->MonthAsString(substr($day['date'], 5, 2)); ?>
+							<?php endif; ?>
+						</strong>
+					</div>
+				</li>
+				<?php foreach ($day['forecasts'] as $forecast) : ?>
+				<li class="<?php if ($forecast->hour == 23) echo 'last '; ?><?php if ($forecast->hour < 6 || $forecast->hour > 18) echo 'night'; else echo 'day'; ?>">
+					<div>
+						<p class="time">
+							<?php echo $forecast->hour; ?>:00 
+						</p>
+						<p class="weather <?php if ($forecast->hour < 6 || $forecast->hour > 18) echo 'night'; else echo 'day'; ?>">
+							<span><?php echo $forecast->temperature; ?>&deg;C</span>
+						</p>	
+						<p class="additional">
+							<?php echo $forecast->temperature_felt; ?>&deg;C, 
+							<?php echo $forecast->pressure; ?> HPa, 
+							<?php if ($forecast->rain > 0 || $forecast->snow > 0) : ?>
+								<?php if ($forecast->rain > 0 && $forecast->snow > 0) : ?>
+									<?php /*
+									opady: <?php echo ($forecast->rain + $forecast->snow); ?> (śnieg: <?php echo $forecast->snow; ?> mm/h, deszcz: <?php echo $forecast->rain; ?> mm/h)
+									 */ ?>
+									 opady: <?php echo ($forecast->rain + $forecast->snow); ?> mm/h
+								<?php else : ?>
+									opady: <?php if ($forecast->rain > 0) echo $forecast->rain; else echo $forecast->snow; ?> mm/h
+								<?php endif; ?>
+							<?php endif; ?>
+							wiatr: <?php echo $this->WindDirection($forecast->wind_direction); ?> <?php echo $forecast->wind_speed; ?> km/h
+						</p>
+					</div>
+				</li>			
+				<?php endforeach; ?>
+			</ul>
+		</li>
+	<?php $i++; ?>
+	<?php endforeach; ?>
+	</ul>
+	<p id="copyright">
+		Pogodę dostarcza MeteoGroup Polska
+	</p>
+</div>
